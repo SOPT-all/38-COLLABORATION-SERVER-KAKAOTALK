@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: kakaotalk
+
+  profiles:
+    # 기본 활성 profile = local
+    active: local
+
+  jpa:
+    hibernate:
+      # 엔티티 변경 시 DB 스키마 자동 갱신
+      ddl-auto: update
+    properties:
+      hibernate:
+        # format_sql + show-sql: true -> 콘솔에 SQL 쿼리 보기 좋게 출력
+        format_sql: true
+    show-sql: true
+    # 트랜잭션 밖에서 LAZY 로딩 막음
+    open-in-view: false
+
+server:
+  # 톰캣 포트
+  port: 8080
