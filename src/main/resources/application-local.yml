@@ -10,5 +10,6 @@ spring:
     # 환경변수 DB_USERNAME이 있으면 그 값, 없으면 docker-compose.yml의 MYSQL_USER 값 (kakaotalk)
     username: ${DB_USERNAME:kakaotalk}
     # 환경변수 DB_PASSWORD가 있으면 그 값, 없으면 docker-compose.yml의 MYSQL_PASSWORD 값
+    # 로컬 환경이므로 평문 비밀번호 관계 X
     password: ${DB_PASSWORD:kakaotalk1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
