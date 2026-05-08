@@ -7,8 +7,8 @@ spring:
   datasource:
     # 한국 시간대 + UTF-8 인코딩 보장
     url: jdbc:mysql://localhost:3306/kakaotalk?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    # 환경변수 DB_USERNAME이 있으면 그 값, 없으면 root
-    username: ${DB_USERNAME:root}
-    # 환경변수 DB_PASSWORD가 있으면 그 값, 없으면 빈 문자열
-    password: ${DB_PASSWORD:}
+    # 환경변수 DB_USERNAME이 있으면 그 값, 없으면 docker-compose.yml의 MYSQL_USER 값 (kakaotalk)
+    username: ${DB_USERNAME:kakaotalk}
+    # 환경변수 DB_PASSWORD가 있으면 그 값, 없으면 docker-compose.yml의 MYSQL_PASSWORD 값
+    password: ${DB_PASSWORD:kakaotalk1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
