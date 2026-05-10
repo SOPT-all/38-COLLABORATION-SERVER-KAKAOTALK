@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class KakaotalkApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(KakaotalkApplication.class, args);
-	}
-
+  public static void main(String[] args) {
+    SpringApplication.run(KakaotalkApplication.class, args);
+  }
 }
