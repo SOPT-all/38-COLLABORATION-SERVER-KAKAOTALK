@@ -1,0 +1,49 @@
+package org.sopt.kakaotalk.global.response;
+
+import org.sopt.kakaotalk.global.code.ErrorCode;
+import org.sopt.kakaotalk.global.code.SuccessCode;
+
+public record BaseResponse<T>(
+        int status,
+        String code,
+        String message,
+        T data
+) {
+
+    public static <T> BaseResponse<T> success(SuccessCode successCode, T data) {
+        return new BaseResponse<>(
+                successCode.getHttpStatus().value(),
+                successCode.getCode(),
+                successCode.getMessage(),
+                data
+        );
+    }
+
+    public static BaseResponse<Void> success(SuccessCode successCode) {
+        return new BaseResponse<>(
+                successCode.getHttpStatus().value(),
+                successCode.getCode(),
+                successCode.getMessage(),
+                null
+        );
+    }
+
+    public static BaseResponse<Void> failure(ErrorCode errorCode) {
+        return new BaseResponse<>(
+                errorCode.getHttpStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                null
+        );
+    }
+
+    // @Valid 실패 시 필드별 에러를 data에 담음
+    public static <T> BaseResponse<T> failure(ErrorCode errorCode, T data) {
+        return new BaseResponse<>(
+                errorCode.getHttpStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                data
+        );
+    }
+}
