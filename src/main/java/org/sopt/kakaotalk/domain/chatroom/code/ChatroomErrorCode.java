@@ -8,10 +8,9 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum ChatroomErrorCode implements ErrorCode {
+  CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHT_404_001", "존재하지 않는 채팅방입니다.");
 
-    CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHT_404_001", "존재하지 않는 채팅방입니다.");
-
-    private final HttpStatus httpStatus;
-    private final String code;
-    private final String message;
+  private final HttpStatus httpStatus;
+  private final String code;
+  private final String message;
 }
