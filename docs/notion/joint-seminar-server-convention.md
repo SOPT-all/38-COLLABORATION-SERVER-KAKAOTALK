@@ -538,21 +538,19 @@ public class UserService {
 ```java
 package {base}.global.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import {base}.global.code.ErrorCode;
 import {base}.global.code.SuccessCode;
-import {base}.global.exception.ErrorCode;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public record BaseResponse<T>(
     int status,
     String code,
     String message,
-    T data // 데이터는 항상 내려줌 / 내려줄 데이터 없으면 null 보냄
+    T data // 데이터 필드는 항상 응답에 포함된다 (null인 경우에도 "data": null 형태로 응답에 포함)
 ) {
 
     public static <T> BaseResponse<T> success(SuccessCode successCode, T data) {
         return new BaseResponse<>(
-            successCode.getStatus(),
+            successCode.getHttpStatus().value(),
             successCode.getCode(),
             successCode.getMessage(),
             data
@@ -561,7 +559,7 @@ public record BaseResponse<T>(
 
     public static BaseResponse<Void> success(SuccessCode successCode) {
         return new BaseResponse<>(
-            successCode.getStatus(),
+            successCode.getHttpStatus().value(),
             successCode.getCode(),
             successCode.getMessage(),
             null
@@ -570,7 +568,7 @@ public record BaseResponse<T>(
 
     public static BaseResponse<Void> failure(ErrorCode errorCode) {
         return new BaseResponse<>(
-            errorCode.getStatus(),
+            errorCode.getHttpStatus().value(),
             errorCode.getCode(),
             errorCode.getMessage(),
             null
@@ -579,7 +577,7 @@ public record BaseResponse<T>(
 
     public static <T> BaseResponse<T> failure(ErrorCode errorCode, T data) {
         return new BaseResponse<>(
-            errorCode.getStatus(),
+            errorCode.getHttpStatus().value(),
             errorCode.getCode(),
             errorCode.getMessage(),
             data
@@ -617,10 +615,10 @@ public record BaseResponse<T>(
 </table>
 **Controller 사용 예**:
 ```java
-// 200 OK
-return ResponseEntity.ok(BaseResponse.success(GlobalSuccessCode.OK, response));
+// 200 OK — 도메인 success 코드 사용
+return ResponseEntity.ok(BaseResponse.success(UserSuccessCode.USER_FOUND, response));
 
-// 201 Created (HTTP status는 ResponseEntity로, 응답 객체는 success로)
+// 201 Created — HTTP status는 ResponseEntity로 명시, 응답 객체는 도메인 success 코드
 return ResponseEntity.status(HttpStatus.CREATED)
     .body(BaseResponse.success(UserSuccessCode.USER_SIGNUP_SUCCESS, response));
 ```
@@ -642,7 +640,8 @@ return ResponseEntity.status(HttpStatus.CREATED)
 {
   "status": 404,
   "code": "MEM_404_001",
-  "message": "존재하지 않는 회원입니다."
+  "message": "존재하지 않는 회원입니다.",
+  "data": null
 }
 ```
 **Validation 실패 응답 예시** (아래 GlobalExceptionHandler 참고):
@@ -657,13 +656,17 @@ return ResponseEntity.status(HttpStatus.CREATED)
 }
 ```
 ##### 예외 처리 — 도메인별 ErrorCode + 5개 핸들러
-###### ErrorCode / SuccessCode 인터페이스
+###### ApiCode / SuccessCode / ErrorCode 인터페이스 계층
 도메인별로 enum을 분리하기 위해 공통 인터페이스를 정의한다. enum은 상속이 불가능하므로 인터페이스를 구현하는 형태로 통일한다.
-```java
-package {base}.global.exception;
 
-public interface ErrorCode {
-    int getStatus();
+`SuccessCode`와 `ErrorCode`가 같은 시그니처(`getHttpStatus`, `getCode`, `getMessage`)를 공유하므로 공통 부모 `ApiCode`를 두고, 두 인터페이스는 marker로 두어 타입 단위 구분만 유지한다. 상태 코드는 `int` 대신 `HttpStatus` enum을 사용하여 오타를 컴파일 단에서 차단한다.
+```java
+package {base}.global.code;
+
+import org.springframework.http.HttpStatus;
+
+public interface ApiCode {
+    HttpStatus getHttpStatus();
     String getCode();
     String getMessage();
 }
@@ -671,10 +674,13 @@ public interface ErrorCode {
 ```java
 package {base}.global.code;
 
-public interface SuccessCode {
-    int getStatus();
-    String getCode();
-    String getMessage();
+public interface SuccessCode extends ApiCode {
+}
+```
+```java
+package {base}.global.code;
+
+public interface ErrorCode extends ApiCode {
 }
 ```
 **코드 형식**: `{도메인 3글자}_{상태코드 3자리}_{도메인 내 카운팅 3자리}`
@@ -683,79 +689,59 @@ ex: `MEM_404_001` (회원, 404 Not Found, 첫 번째 정의), `COM_200_001` (공
 ###### GlobalErrorCode (공통)
 **예시:**
 ```java
-package {base}.global.exception;
+package {base}.global.code;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
 public enum GlobalErrorCode implements ErrorCode {
 
-    // 400 BAD REQUEST
-    INVALID_REQUEST(400, "COM_400_001", "잘못된 요청입니다."),
-    INVALID_NUMBER_FORMAT(400, "COM_400_002", "숫자만 입력해주세요."),
-    INVALID_EMAIL_FORMAT(400, "COM_400_003", "잘못된 이메일 형식입니다."),
-    INVALID_NULL_DATA(400, "COM_400_004", "빈 값은 허용되지 않습니다."),
+    // 400 — GlobalExceptionHandler의 @Valid / 잘못된 JSON / PathVariable 검증 실패 처리
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COM_400_001", "잘못된 요청입니다."),
 
-    // 401 / 403
-    UNAUTHORIZED(401, "COM_401_001", "인증이 필요합니다."),
-    FORBIDDEN(403, "COM_403_001", "접근 권한이 없습니다."),
+    // 500 — 예상하지 못한 모든 예외의 fallback
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COM_500_001", "서버 내부 오류가 발생했습니다.");
 
-    // 404
-    RESOURCE_NOT_FOUND(404, "COM_404_001", "존재하지 않는 리소스입니다."),
+    // UNAUTHORIZED / FORBIDDEN / RESOURCE_NOT_FOUND 등은 사용처가 생기는 시점의 PR에서 도입한다 (YAGNI).
 
-    // 500
-    INTERNAL_SERVER_ERROR(500, "COM_500_001", "서버 내부 오류가 발생했습니다.");
-
-    private final int status;
+    private final HttpStatus httpStatus;
     private final String code;
     private final String message;
 }
 ```
 ###### GlobalSuccessCode (공통)
-```java
-package {base}.global.code;
+**기본적으로 생성하지 않는다.** 대부분의 엔드포인트는 도메인 의미가 명확하므로 도메인 success 코드(`{Domain}SuccessCode.XXX`)로 응답하는 게 자연스럽다. 모든 엔드포인트가 도메인 success 코드를 사용한다면 `GlobalSuccessCode`는 사용처가 0개이므로 만들지 않는다 (YAGNI).
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@Getter
-@RequiredArgsConstructor
-public enum GlobalSuccessCode implements SuccessCode {
-
-    OK(200, "COM_200_001", "요청이 성공했습니다."),
-    CREATED(201, "COM_201_001", "리소스가 생성되었습니다."),
-    NO_CONTENT(204, "COM_204_001", "요청이 성공적으로 처리되었습니다.");
-
-    private final int status;
-    private final String code;
-    private final String message;
-}
-```
+generic 성공 응답이 필요한 엔드포인트(헬스 체크, 단순 ping 등)가 등장하는 시점의 PR에서 한 줄씩 도입한다. 도입 시 시그니처는 `GlobalErrorCode`와 같이 `HttpStatus` enum을 사용한다.
 ###### 도메인별 ErrorCode / SuccessCode 예시
-**`domain/user/exception/UserErrorCode.java`**:
-```java
-package {base}.domain.user.exception;
+도메인별 `XxxSuccessCode`와 `XxxErrorCode`는 같은 `domain/{name}/code/` 폴더에 함께 둔다 (도메인별 `exception/` 폴더는 만들지 않는다 — `BusinessException`이 통합 사용되어 도메인 예외 클래스가 별도로 필요 없음).
 
-import {base}.global.exception.ErrorCode;
+**`domain/user/code/UserErrorCode.java`**:
+```java
+package {base}.domain.user.code;
+
+import {base}.global.code.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
 public enum UserErrorCode implements ErrorCode {
 
     // 400
-    AGE_MUST_UPPER_THAN_20(400, "MEM_400_001", "20세 미만은 가입할 수 없습니다."),
+    AGE_MUST_UPPER_THAN_20(HttpStatus.BAD_REQUEST, "MEM_400_001", "20세 미만은 가입할 수 없습니다."),
 
     // 404
-    USER_NOT_FOUND(404, "MEM_404_001", "존재하지 않는 회원입니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEM_404_001", "존재하지 않는 회원입니다."),
 
     // 409
-    EMAIL_ALREADY_EXISTS(409, "MEM_409_001", "이미 가입된 이메일입니다.");
+    EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEM_409_001", "이미 가입된 이메일입니다.");
 
-    private final int status;
+    private final HttpStatus httpStatus;
     private final String code;
     private final String message;
 }
@@ -767,15 +753,16 @@ package {base}.domain.user.code;
 import {base}.global.code.SuccessCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
 public enum UserSuccessCode implements SuccessCode {
 
-    USER_SIGNUP_SUCCESS(201, "MEM_201_001", "회원가입이 완료되었습니다."),
-    USER_FOUND(200, "MEM_200_001", "회원 조회에 성공했습니다.");
+    USER_SIGNUP_SUCCESS(HttpStatus.CREATED, "MEM_201_001", "회원가입이 완료되었습니다."),
+    USER_FOUND(HttpStatus.OK, "MEM_200_001", "회원 조회에 성공했습니다.");
 
-    private final int status;
+    private final HttpStatus httpStatus;
     private final String code;
     private final String message;
 }
@@ -786,6 +773,10 @@ public enum UserSuccessCode implements SuccessCode {
 ```java
 package {base}.global.exception;
 
+import {base}.global.code.ErrorCode;
+import lombok.Getter;
+
+@Getter
 public class BusinessException extends RuntimeException {
 
     private final ErrorCode errorCode;
@@ -794,17 +785,9 @@ public class BusinessException extends RuntimeException {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
-
-    public BusinessException(ErrorCode errorCode, String detail) {
-        super(errorCode.getMessage() + " - " + detail);
-        this.errorCode = errorCode;
-    }
-
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
 }
 ```
+디버깅용 detail 메시지가 필요한 케이스가 생기면 그 시점에 별도 생성자 `BusinessException(ErrorCode, String detail)`를 추가한다 (YAGNI).
 **Service에서 던지는 예시**:
 ```java
 public UserResponse getUser(Long userId) {
@@ -844,6 +827,8 @@ public UserResponse getUser(Long userId) {
 ```java
 package {base}.global.exception;
 
+import {base}.global.code.ErrorCode;
+import {base}.global.code.GlobalErrorCode;
 import {base}.global.response.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -869,7 +854,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<BaseResponse<Void>> handleBusinessException(BusinessException e) {
         ErrorCode errorCode = e.getErrorCode();
         log.warn("[BusinessException] {} - {}", errorCode.getCode(), e.getMessage());
-        return ResponseEntity.status(errorCode.getStatus())
+        return ResponseEntity.status(errorCode.getHttpStatus())
             .body(BaseResponse.failure(errorCode));
     }
 
@@ -885,6 +870,7 @@ public class GlobalExceptionHandler {
                 Optional.ofNullable(fieldError.getDefaultMessage()).orElse("Invalid value")
             );
         }
+        log.warn("[MethodArgumentNotValid] {}", fieldErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(BaseResponse.failure(GlobalErrorCode.INVALID_REQUEST, fieldErrors));
     }
@@ -970,7 +956,7 @@ public class UserController {
         @PathVariable Long userId
     ) {
         UserResponse response = userService.getUser(userId);
-        return ResponseEntity.ok(BaseResponse.success(GlobalSuccessCode.OK, response));
+        return ResponseEntity.ok(BaseResponse.success(UserSuccessCode.USER_FOUND, response));
     }
 }
 ```
@@ -1027,17 +1013,16 @@ public class UserController {
   │   │   ├── dto/
   │   │   │   ├── request/     ← UserSignupRequest
   │   │   │   └── response/    ← UserResponse
-  │   │   ├── exception/       ← UserErrorCode
-  │   │   └── code/            ← UserSuccessCode
+  │   │   └── code/            ← UserSuccessCode, UserErrorCode
   │   ├── post/
   │   │   └── ... (동일 구조)
   │   └── ...
   ├── global/
+  │   ├── code/                ← ApiCode, SuccessCode, ErrorCode 인터페이스 + GlobalErrorCode
   │   ├── config/              ← Spring 설정 (Security, CORS, Swagger, JPA 등)
   │   ├── entity/              ← BaseTimeEntity 등 공통 엔티티
-  │   ├── exception/           ← BusinessException, ErrorCode 인터페이스, GlobalErrorCode, GlobalExceptionHandler
+  │   ├── exception/           ← BusinessException, GlobalExceptionHandler
   │   ├── response/            ← BaseResponse
-  │   ├── code/                ← SuccessCode 인터페이스, GlobalSuccessCode
   │   └── util/                ← DateUtils, StringUtils 등 공통 유틸
   └── {Project}Application.java
 ```
@@ -1075,12 +1060,8 @@ public class UserController {
 <td>응답 DTO</td>
 </tr>
 <tr>
-<td>domain/\{name\}/exception</td>
-<td>도메인별 XxxErrorCode enum (ErrorCode 인터페이스 구현)</td>
-</tr>
-<tr>
 <td>domain/\{name\}/code</td>
-<td>도메인별 XxxSuccessCode enum (SuccessCode 인터페이스 구현)</td>
+<td>도메인별 XxxSuccessCode와 XxxErrorCode enum (각각 SuccessCode / ErrorCode 인터페이스 구현)</td>
 </tr>
 <tr>
 <td>global/config</td>
@@ -1091,16 +1072,16 @@ public class UserController {
 <td>BaseTimeEntity 같이 모든 엔티티가 상속할 공통 엔티티</td>
 </tr>
 <tr>
+<td>global/code</td>
+<td>ApiCode 부모 인터페이스 + SuccessCode / ErrorCode marker 인터페이스 + GlobalErrorCode enum</td>
+</tr>
+<tr>
 <td>global/exception</td>
-<td>ErrorCode 인터페이스, GlobalErrorCode, BusinessException, GlobalExceptionHandler</td>
+<td>BusinessException, GlobalExceptionHandler</td>
 </tr>
 <tr>
 <td>global/response</td>
 <td>BaseResponse</td>
-</tr>
-<tr>
-<td>global/code</td>
-<td>SuccessCode 인터페이스, GlobalSuccessCode</td>
 </tr>
 <tr>
 <td>global/util</td>
@@ -1757,16 +1738,16 @@ KakaotalkApplication.java 우클릭 → Run
 </tr>
 </table>
 ##### 프로젝트 구조
-```java
+```plain text
 src/main/java/org/sopt/kakaotalk/
-├── domain/         # 도메인별 패키지 (user, post 등)
-└── global/         # 공통 인프라
-├── code/           # SuccessCode 인터페이스 + GlobalSuccessCode
-├── config/         # Spring Bean 설정
-├── entity/         # BaseTimeEntity 등 공통 엔티티
-├── exception/      # ErrorCode, BusinessException, GlobalExceptionHandler
-├── response/       # BaseResponse
-└── util/           # 공통 유틸
+├── domain/             # 도메인별 패키지 (chatroom, folder 등)
+└── global/             # 공통 베이스 코드
+    ├── code/           # ApiCode 부모 인터페이스 + SuccessCode / ErrorCode marker 인터페이스 + GlobalErrorCode
+    ├── config/         # Spring Bean 설정
+    ├── entity/         # BaseTimeEntity 등 공통 엔티티
+    ├── exception/      # BusinessException, GlobalExceptionHandler
+    ├── response/       # BaseResponse
+    └── util/           # 공통 유틸
 ```
 
 ## 기술스택
