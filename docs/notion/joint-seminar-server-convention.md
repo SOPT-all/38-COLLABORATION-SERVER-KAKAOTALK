@@ -1738,16 +1738,16 @@ KakaotalkApplication.java 우클릭 → Run
 </tr>
 </table>
 ##### 프로젝트 구조
-```java
+```plain text
 src/main/java/org/sopt/kakaotalk/
-├── domain/         # 도메인별 패키지 (user, post 등)
-└── global/         # 공통 인프라
-├── code/           # SuccessCode 인터페이스 + GlobalSuccessCode
-├── config/         # Spring Bean 설정
-├── entity/         # BaseTimeEntity 등 공통 엔티티
-├── exception/      # ErrorCode, BusinessException, GlobalExceptionHandler
-├── response/       # BaseResponse
-└── util/           # 공통 유틸
+├── domain/             # 도메인별 패키지 (chatroom, folder 등)
+└── global/             # 공통 베이스 코드
+    ├── code/           # ApiCode 부모 인터페이스 + SuccessCode / ErrorCode marker 인터페이스 + GlobalErrorCode
+    ├── config/         # Spring Bean 설정
+    ├── entity/         # BaseTimeEntity 등 공통 엔티티
+    ├── exception/      # BusinessException, GlobalExceptionHandler
+    ├── response/       # BaseResponse
+    └── util/           # 공통 유틸
 ```
 
 ## 기술스택
