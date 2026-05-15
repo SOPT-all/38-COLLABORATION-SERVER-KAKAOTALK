@@ -27,8 +27,7 @@ public class ChatroomController {
 
   @Operation(
       summary = "채팅방 목록 조회",
-      description =
-          "채팅방 목록을 최근 메시지 시각 기준 내림차순으로 조회합니다. 폴더·안읽음 필터를 옵션으로 적용할 수 있습니다.")
+      description = "채팅방 목록을 최근 메시지 시각 기준 내림차순으로 조회합니다. 폴더·안읽음 필터를 옵션으로 적용할 수 있습니다.")
   @GetMapping
   public BaseResponse<ChatroomListResponse> getAllChatrooms(
       @Parameter(
@@ -36,9 +35,7 @@ public class ChatroomController {
               example = "SOPT")
           @RequestParam(required = false)
           FolderName folderName,
-      @Parameter(
-              description = "true이면 안 읽은 메시지가 있는 채팅방(unreadCount > 0)만 필터",
-              example = "false")
+      @Parameter(description = "true이면 안 읽은 메시지가 있는 채팅방(unreadCount > 0)만 필터", example = "false")
           @RequestParam(defaultValue = "false")
           boolean unreadOnly) {
     ChatroomListResponse response = chatroomService.getAllChatrooms(folderName, unreadOnly);
