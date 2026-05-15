@@ -11,24 +11,26 @@ import org.sopt.kakaotalk.global.entity.BaseTimeEntity;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "chatroom_folder", uniqueConstraints = @UniqueConstraint(
-        name = "uk_chatroom_folder",
-        columnNames = {"chatroom_id", "folder_id"}
-))
+@Table(
+    name = "chatroom_folder",
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "uk_chatroom_folder",
+            columnNames = {"chatroom_id", "folder_id"}))
 public class ChatroomFolder extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "chatroom_folder_id")
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "chatroom_folder_id")
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chatroom_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private Chatroom chatroom;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "chatroom_id", nullable = false)
+  @OnDelete(action = OnDeleteAction.CASCADE)
+  private Chatroom chatroom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "folder_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private Folder folder;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "folder_id", nullable = false)
+  @OnDelete(action = OnDeleteAction.CASCADE)
+  private Folder folder;
 }
