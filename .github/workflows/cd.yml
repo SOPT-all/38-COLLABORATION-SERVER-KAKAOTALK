@@ -83,20 +83,38 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
+      - name: Create deployment env file
+        env:
+          DOCKER_IMAGE: ${{ steps.image.outputs.image }}:latest
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DDL_AUTO: ${{ secrets.DDL_AUTO || 'validate' }}
+        run: |
+          {
+            printf 'DOCKER_IMAGE=%s\n' "$DOCKER_IMAGE"
+            printf 'DB_URL=%s\n' "$DB_URL"
+            printf 'DB_USERNAME=%s\n' "$DB_USERNAME"
+            printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD"
+            printf 'DDL_AUTO=%s\n' "$DDL_AUTO"
+          } > deploy.env
+
       - name: Copy production compose file
         run: |
           ssh "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "mkdir -p ${DEPLOY_PATH}"
           scp docker-compose.prod.yml \
             "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${DEPLOY_PATH}/docker-compose.prod.yml"
+          scp deploy.env \
+            "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${DEPLOY_PATH}/.deploy.env"
 
       - name: Deploy on EC2
         env:
-          DOCKER_IMAGE: ${{ steps.image.outputs.image }}:latest
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ssh "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
             "cd ${DEPLOY_PATH} && \
+            trap 'rm -f .deploy.env' EXIT && \
             echo '${GHCR_TOKEN}' | docker login ${REGISTRY} -u '${{ github.actor }}' --password-stdin && \
-            DOCKER_IMAGE='${DOCKER_IMAGE}' docker compose -f docker-compose.prod.yml pull && \
-            DOCKER_IMAGE='${DOCKER_IMAGE}' docker compose -f docker-compose.prod.yml up -d && \
+            docker compose --env-file .deploy.env -f docker-compose.prod.yml pull && \
+            docker compose --env-file .deploy.env -f docker-compose.prod.yml up -d && \
             docker image prune -f"
