@@ -31,8 +31,9 @@ erDiagram
     }
 
     CHATROOM_FOLDERS {
-        BIGINT chatroom_id PK, FK
-        BIGINT folder_id PK, FK
+        BIGINT chatroom_folder_id PK
+        BIGINT chatroom_id FK
+        BIGINT folder_id FK
         DATETIME created_at
         DATETIME updated_at
     }
@@ -88,8 +89,9 @@ erDiagram
 
 | 컬럼 | 타입 | 제약 조건 | 설명 |
 | --- | --- | --- | --- |
-| `chatroom_id` | `BIGINT` | PK, FK, ON DELETE CASCADE | 매핑된 채팅방 ID |
-| `folder_id` | `BIGINT` | PK, FK, ON DELETE CASCADE, INDEX | 매핑된 폴더 ID |
+| `chatroom_folder_id` | `BIGINT` | PK, AUTO_INCREMENT | 채팅방-폴더 매핑 고유 ID |
+| `chatroom_id` | `BIGINT` | FK, NOT NULL, ON DELETE CASCADE, UNIQUE 조합 | 매핑된 채팅방 ID |
+| `folder_id` | `BIGINT` | FK, NOT NULL, ON DELETE CASCADE, INDEX, UNIQUE 조합 | 매핑된 폴더 ID |
 | `created_at` | `DATETIME` | NOT NULL | 생성 시각 |
 | `updated_at` | `DATETIME` | NOT NULL | 수정 시각 |
 
@@ -97,10 +99,11 @@ erDiagram
 
 - `chatrooms`와 `chatroom_folders`는 1:N 관계이다.
 - `folders`와 `chatroom_folders`는 1:N 관계이다.
-- `chatroom_folders`는 `chatroom_id`, `folder_id`를 복합 PK로 두는 현재 설계를 기준으로 한다.
+- `chatroom_folders`는 JPA 구현 복잡도를 줄이기 위해 단일 PK인 `chatroom_folder_id`를 둔다.
+- `chatroom_folders`는 `chatroom_id`, `folder_id` 조합에 unique 제약을 두어 중복 매핑을 방지한다.
 - `chatrooms` 또는 `folders` row가 삭제되면 연결된 `chatroom_folders` row도 함께 삭제된다.
-- JPA 구현 시에는 `chatroom_folders`를 단순 `@ManyToMany`가 아닌 연결 엔티티로 관리하는 방향을
-  우선 검토한다.
+- JPA 구현 시 `chatroom_folders`는 별도 도메인으로 분리하지 않고 `domain/chatroom` 하위에서
+  관리한다.
 
 ## 인덱스
 
@@ -147,12 +150,16 @@ CREATE TABLE `chatrooms` (
 );
 
 CREATE TABLE `chatroom_folders` (
-    `chatroom_id` BIGINT   NOT NULL,
-    `folder_id`   BIGINT   NOT NULL,
-    `created_at`  DATETIME NOT NULL,
-    `updated_at`  DATETIME NOT NULL,
+    `chatroom_folder_id` BIGINT   NOT NULL AUTO_INCREMENT,
+    `chatroom_id`        BIGINT   NOT NULL,
+    `folder_id`          BIGINT   NOT NULL,
+    `created_at`         DATETIME NOT NULL,
+    `updated_at`         DATETIME NOT NULL,
 
-    CONSTRAINT `PK_CHATROOM_FOLDERS` PRIMARY KEY (`chatroom_id`, `folder_id`),
+    CONSTRAINT `PK_CHATROOM_FOLDERS` PRIMARY KEY (`chatroom_folder_id`),
+
+    CONSTRAINT `UK_CHATROOM_FOLDERS_CHATROOM_ID_FOLDER_ID`
+        UNIQUE (`chatroom_id`, `folder_id`),
 
     CONSTRAINT `FK_CHATROOMS_TO_CHATROOM_FOLDERS`
         FOREIGN KEY (`chatroom_id`) REFERENCES `chatrooms` (`chatroom_id`)
