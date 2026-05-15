@@ -1,23 +1,23 @@
 package org.sopt.kakaotalk.domain.chatroom.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.sopt.kakaotalk.domain.folder.entity.Folder;
-import org.sopt.kakaotalk.global.entity.BaseTimeEntity;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
     name = "chatroom_folder",
     uniqueConstraints =
         @UniqueConstraint(
             name = "uk_chatroom_folder",
             columnNames = {"chatroom_id", "folder_id"}))
-public class ChatroomFolder extends BaseTimeEntity {
+public class ChatroomFolder {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
