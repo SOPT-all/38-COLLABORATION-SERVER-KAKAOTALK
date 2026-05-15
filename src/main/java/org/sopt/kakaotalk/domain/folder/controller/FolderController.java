@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/folders")
 public class FolderController {
 
-    private final FolderService folderService;
+  private final FolderService folderService;
 
-    @Operation(summary = "폴더 목록 조회", description = "폴더 관리 화면에서 사용할 폴더 목록을 조회합니다.")
-    @GetMapping
-    public BaseResponse<FolderListResponse> getFolders() {
-        FolderListResponse response = folderService.getFolders();
-        return BaseResponse.success(FolderSuccessCode.FOLDERS_FETCHED, response);
-    }
+  @Operation(summary = "폴더 목록 조회", description = "폴더 관리 화면에서 사용할 폴더 목록을 조회합니다.")
+  @GetMapping
+  public BaseResponse<FolderListResponse> getFolders() {
+    FolderListResponse response = folderService.getFolders();
+    return BaseResponse.success(FolderSuccessCode.FOLDERS_FETCHED, response);
+  }
 }

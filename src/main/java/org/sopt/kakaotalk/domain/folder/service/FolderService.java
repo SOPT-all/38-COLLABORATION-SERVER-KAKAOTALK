@@ -11,9 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class FolderService {
 
-    private final FolderRepository folderRepository;
+  private final FolderRepository folderRepository;
 
-    public FolderListResponse getFolders() {
-        return FolderListResponse.from(folderRepository.findAll());
-    }
+  public FolderListResponse getFolders() {
+    return FolderListResponse.from(folderRepository.findAll());
+  }
 }

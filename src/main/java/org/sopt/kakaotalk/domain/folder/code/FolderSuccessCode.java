@@ -8,9 +8,9 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum FolderSuccessCode implements SuccessCode {
-    FOLDERS_FETCHED(HttpStatus.OK, "FLD_200_001", "폴더 목록 조회에 성공했습니다.");
+  FOLDERS_FETCHED(HttpStatus.OK, "FLD_200_001", "폴더 목록 조회에 성공했습니다.");
 
-    private final HttpStatus httpStatus;
-    private final String code;
-    private final String message;
+  private final HttpStatus httpStatus;
+  private final String code;
+  private final String message;
 }
