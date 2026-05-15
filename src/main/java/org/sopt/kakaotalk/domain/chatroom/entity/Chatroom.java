@@ -11,7 +11,7 @@ import org.sopt.kakaotalk.global.entity.BaseTimeEntity;
 @Getter
 // 파라미터 없는 기본 생성자 생성
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "chatroom")
+@Table(name = "chatrooms")
 public class Chatroom extends BaseTimeEntity {
 
   @Id

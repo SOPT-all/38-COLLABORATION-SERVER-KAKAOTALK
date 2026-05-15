@@ -12,10 +12,10 @@ import org.sopt.kakaotalk.domain.folder.entity.Folder;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-    name = "chatroom_folder",
+    name = "chatroom_folders",
     uniqueConstraints =
         @UniqueConstraint(
-            name = "uk_chatroom_folder",
+            name = "uk_chatroom_folders",
             columnNames = {"chatroom_id", "folder_id"}))
 public class ChatroomFolder {
 
