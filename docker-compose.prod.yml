@@ -1,0 +1,16 @@
+services:
+  app:
+    image: ${DOCKER_IMAGE}
+    container_name: kakaotalk-server
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DDL_AUTO: ${DDL_AUTO:-validate}
+      TZ: Asia/Seoul
