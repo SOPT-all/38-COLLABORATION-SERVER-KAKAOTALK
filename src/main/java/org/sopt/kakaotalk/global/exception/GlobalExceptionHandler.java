@@ -16,6 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 // Lombok의 log변수를 클래스에 자동 주입 -> log.warn(...) 등 호출을 별도 선언 없이 사용 가능
 @Slf4j
@@ -65,7 +66,16 @@ public class GlobalExceptionHandler {
         .body(BaseResponse.failure(GlobalErrorCode.INVALID_REQUEST));
   }
 
-  // 5. fallback — 위 4개에 안 잡힌 모든 예외
+  // 5. @PathVariable / @RequestParam 타입 변환 실패 (예: Long 자리에 문자열, enum에 미허용 값)
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<BaseResponse<Void>> handleMethodArgumentTypeMismatch(
+      MethodArgumentTypeMismatchException e) {
+    log.warn("[MethodArgumentTypeMismatch] {} - {}", e.getName(), e.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(BaseResponse.failure(GlobalErrorCode.INVALID_REQUEST));
+  }
+
+  // 6. fallback — 위 5개에 안 잡힌 모든 예외
   // 실제로 디버깅이 필요한 케이스 -> Sentry/AlertManager 등에서 error 감지할 수 있도록 log.error() 적용
   @ExceptionHandler(Exception.class)
   public ResponseEntity<BaseResponse<Void>> handleException(
