@@ -70,17 +70,19 @@ erDiagram
 
 `name`은 아래 값만 허용한다.
 
+- `UNREAD`
 - `SOPT`
-- `FAMILY`
-- `FRIENDS`
-- `PART_TIME`
+- `SCHOOL`
+- `DI_TECH`
+- `GRADUATION`
 
 `icon`은 아래 값만 허용한다.
 
-- `ICON_STUDENT`
-- `ICON_HEART`
-- `ICON_COFFEE`
+- `ICON_UNREAD`
 - `ICON_BRIEFCASE`
+- `ICON_RYAN`
+- `ICON_SHOPPINGBAG`
+- `ICON_HEART`
 
 ### chatroom_folders
 
@@ -128,10 +130,10 @@ CREATE TABLE `folders` (
     CONSTRAINT `UK_FOLDERS_NAME` UNIQUE (`name`),
 
     CONSTRAINT `CHK_FOLDERS_NAME`
-        CHECK (`name` IN ('SOPT', 'FAMILY', 'FRIENDS', 'PART_TIME')),
+        CHECK (`name` IN ('UNREAD', 'SOPT', 'SCHOOL', 'DI_TECH', 'GRADUATION')),
 
     CONSTRAINT `CHK_FOLDERS_ICON`
-        CHECK (`icon` IN ('ICON_STUDENT', 'ICON_HEART', 'ICON_COFFEE', 'ICON_BRIEFCASE'))
+        CHECK (`icon` IN ('ICON_UNREAD', 'ICON_BRIEFCASE', 'ICON_RYAN', 'ICON_SHOPPINGBAG', 'ICON_HEART'))
 );
 
 CREATE TABLE `chatrooms` (
