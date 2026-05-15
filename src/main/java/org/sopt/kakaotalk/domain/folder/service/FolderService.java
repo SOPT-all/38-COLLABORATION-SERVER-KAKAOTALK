@@ -14,6 +14,6 @@ public class FolderService {
   private final FolderRepository folderRepository;
 
   public FolderListResponse getFolders() {
-    return FolderListResponse.from(folderRepository.findAll());
+    return FolderListResponse.from(folderRepository.findAllByOrderByFolderIdAsc());
   }
 }
