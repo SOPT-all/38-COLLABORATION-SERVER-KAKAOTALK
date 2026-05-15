@@ -28,7 +28,7 @@ class FolderListResponseTest {
     assertThat(response.folders())
         .extracting(FolderResponse::folderId, FolderResponse::name, FolderResponse::icon)
         .containsExactly(
-            tuple(-1L, "ALL", "ICON_NULL"),
+            tuple(-1L, "ALL", "ICON_NONE"),
             tuple(-2L, "UNREAD", "ICON_SPEECHBUBBLE"),
             tuple(1L, "SOPT", "ICON_RYAN"),
             tuple(2L, "SCHOOL", "ICON_BRIEFCASE"));

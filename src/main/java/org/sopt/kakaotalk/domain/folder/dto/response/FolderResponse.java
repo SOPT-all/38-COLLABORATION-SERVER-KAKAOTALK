@@ -13,7 +13,7 @@ public record FolderResponse(
   private static final long UNREAD_FOLDER_ID = -2L;
   private static final String ALL_FOLDER_NAME = "ALL";
   private static final String UNREAD_FOLDER_NAME = "UNREAD";
-  private static final String ALL_FOLDER_ICON = "ICON_NULL";
+  private static final String ALL_FOLDER_ICON = "ICON_NONE";
   private static final String UNREAD_FOLDER_ICON = "ICON_SPEECHBUBBLE";
 
   public static FolderResponse all() {
