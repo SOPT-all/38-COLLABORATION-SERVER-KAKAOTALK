@@ -71,16 +71,20 @@ erDiagram
 `name`은 아래 값만 허용한다.
 
 - `SOPT`
-- `FAMILY`
-- `FRIENDS`
-- `PART_TIME`
+- `SCHOOL`
+- `DI_TECH`
+- `GRADUATION`
 
 `icon`은 아래 값만 허용한다.
 
-- `ICON_STUDENT`
-- `ICON_HEART`
-- `ICON_COFFEE`
 - `ICON_BRIEFCASE`
+- `ICON_RYAN`
+- `ICON_SHOPPINGBAG`
+- `ICON_HEART`
+
+`UNREAD`는 `folders` 테이블에 저장되는 폴더 row가 아니라 `chatrooms.unread_count > 0` 조건으로
+파생되는 동적 필터 값이다. 안읽음 폴더 노출이 필요한 응답에서는 엔티티가 아닌 응답 DTO에서
+동적으로 추가한다.
 
 ### chatroom_folders
 
@@ -128,10 +132,10 @@ CREATE TABLE `folders` (
     CONSTRAINT `UK_FOLDERS_NAME` UNIQUE (`name`),
 
     CONSTRAINT `CHK_FOLDERS_NAME`
-        CHECK (`name` IN ('SOPT', 'FAMILY', 'FRIENDS', 'PART_TIME')),
+        CHECK (`name` IN ('SOPT', 'SCHOOL', 'DI_TECH', 'GRADUATION')),
 
     CONSTRAINT `CHK_FOLDERS_ICON`
-        CHECK (`icon` IN ('ICON_STUDENT', 'ICON_HEART', 'ICON_COFFEE', 'ICON_BRIEFCASE'))
+        CHECK (`icon` IN ('ICON_BRIEFCASE', 'ICON_RYAN', 'ICON_SHOPPINGBAG', 'ICON_HEART'))
 );
 
 CREATE TABLE `chatrooms` (
