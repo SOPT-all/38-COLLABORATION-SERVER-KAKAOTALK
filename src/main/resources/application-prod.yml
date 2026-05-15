@@ -1,0 +1,20 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      # 첫 배포 시에는 DDL_AUTO=update로 테이블을 생성하고, 이후 validate로 전환한다.
+      ddl-auto: ${DDL_AUTO:validate}
+    properties:
+      hibernate:
+        format_sql: false
+    show-sql: false
+    open-in-view: false
