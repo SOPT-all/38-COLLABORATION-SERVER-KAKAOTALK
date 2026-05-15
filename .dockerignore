@@ -1,0 +1,14 @@
+.git
+.github
+.gradle
+gradle
+src
+docs
+
+*.md
+docker-compose.yml
+docker-compose.*.yml
+
+build/*
+!build/libs/
+!build/libs/*.jar
