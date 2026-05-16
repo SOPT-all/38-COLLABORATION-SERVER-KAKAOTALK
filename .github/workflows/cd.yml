@@ -126,6 +126,8 @@ jobs:
                 "echo " + ($token | @sh) + " | docker login " + ($registry | @sh) + " -u " + ($actor | @sh) + " --password-stdin",
                 "docker compose --env-file .deploy.env -f docker-compose.prod.yml pull",
                 "docker compose --env-file .deploy.env -f docker-compose.prod.yml up -d",
+                "attempt=0",
+                "until curl -fsS http://localhost:8080/swagger-ui/index.html >/dev/null; do attempt=$((attempt + 1)); if [ \"$attempt\" -ge 30 ]; then docker compose --env-file .deploy.env -f docker-compose.prod.yml logs --tail=100 app; exit 1; fi; sleep 2; done",
                 "docker image prune -f"
               ]
             }' > ssm-parameters.json
