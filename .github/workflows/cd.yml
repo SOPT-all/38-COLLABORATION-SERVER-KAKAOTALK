@@ -100,21 +100,14 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: GitHubActionsDeploy
 
-      - name: Prepare Systems Manager payload
-        id: payload
-        run: |
-          {
-            echo "compose=$(base64 -w 0 docker-compose.prod.yml)"
-            echo "env_file=$(base64 -w 0 deploy.env)"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Deploy through Systems Manager
         env:
-          COMPOSE_BASE64: ${{ steps.payload.outputs.compose }}
-          DEPLOY_ENV_BASE64: ${{ steps.payload.outputs.env_file }}
           EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          COMPOSE_BASE64="$(base64 -w 0 docker-compose.prod.yml)"
+          DEPLOY_ENV_BASE64="$(base64 -w 0 deploy.env)"
+
           jq -n \
             --arg deployPath "$DEPLOY_PATH" \
             --arg composeBase64 "$COMPOSE_BASE64" \
@@ -129,7 +122,7 @@ jobs:
                 "printf %s " + ($composeBase64 | @sh) + " | base64 -d > " + (($deployPath + "/docker-compose.prod.yml") | @sh),
                 "printf %s " + ($envFileBase64 | @sh) + " | base64 -d > " + (($deployPath + "/.deploy.env") | @sh),
                 "cd " + ($deployPath | @sh),
-                "trap 'rm -f .deploy.env' EXIT",
+                "trap \"rm -f .deploy.env\" EXIT",
                 "echo " + ($token | @sh) + " | docker login " + ($registry | @sh) + " -u " + ($actor | @sh) + " --password-stdin",
                 "docker compose --env-file .deploy.env -f docker-compose.prod.yml pull",
                 "docker compose --env-file .deploy.env -f docker-compose.prod.yml up -d",
