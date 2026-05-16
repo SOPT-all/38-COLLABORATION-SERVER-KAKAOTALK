@@ -69,10 +69,12 @@
 3. GitHub Actions가 OIDC로 AWS Role을 assume한다.
 4. `docker-compose.prod.yml`과 임시 `.deploy.env` 내용을 SSM Run Command로 EC2에 전달한다.
 5. EC2가 최신 이미지를 pull하고 컨테이너를 재기동한다.
-6. 배포가 끝나면 임시 `.deploy.env` 파일을 삭제한다.
+6. EC2 내부에서 Swagger UI 응답을 확인해 애플리케이션 기동까지 검증한다.
+7. 배포가 끝나면 임시 `.deploy.env` 파일을 삭제한다.
 
 ## 운영 메모
 
 - 이 방식은 GitHub Actions runner가 EC2의 `22/tcp`로 직접 접속하지 않는다.
 - 현재 1차 전환안은 기존 GitHub Secrets 운용을 유지하기 위해 배포용 환경값을 SSM 명령으로 전달한다.
+- 배포 성공은 컨테이너 재기동뿐 아니라 EC2 내부 `localhost:8080` HTTP 응답까지 확인한 뒤 판정한다.
 - 장기적으로는 `DB_PASSWORD` 같은 민감값을 AWS Systems Manager Parameter Store 또는 AWS Secrets Manager로 옮기는 편이 더 안전하다.
