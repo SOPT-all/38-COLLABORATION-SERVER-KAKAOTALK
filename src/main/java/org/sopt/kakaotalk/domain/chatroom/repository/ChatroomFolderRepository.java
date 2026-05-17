@@ -16,4 +16,13 @@ public interface ChatroomFolderRepository extends JpaRepository<ChatroomFolder, 
     """)
   List<ChatroomFolder> findAllByChatroomIdInWithFolder(
       @Param("chatroomIds") List<Long> chatroomIds);
+
+  // 폴더별 unread 합계. ALL/UNREAD 가상 폴더는 별도 (ChatroomRepository.sumAllUnread)
+  @Query(
+      """
+        SELECT cf.folder.folderId AS folderId, COALESCE(SUM(cf.chatroom.unreadCount), 0) AS unreadCount
+        FROM ChatroomFolder cf
+        GROUP BY cf.folder.folderId
+    """)
+  List<FolderUnreadCountProjection> findUnreadCountByFolder();
 }
