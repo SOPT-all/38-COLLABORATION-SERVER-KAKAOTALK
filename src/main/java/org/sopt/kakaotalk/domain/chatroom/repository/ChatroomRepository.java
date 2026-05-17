@@ -46,4 +46,8 @@ public interface ChatroomRepository extends JpaRepository<Chatroom, Long> {
           ORDER BY c.lastMessageAt DESC
       """)
   List<Chatroom> findAllByFolderNameAndUnread(@Param("folderName") FolderName folderName);
+
+  // 모든 채팅방의 unread 합계 (ALL/UNREAD 가상 폴더용)
+  @Query("SELECT COALESCE(SUM(c.unreadCount), 0) FROM Chatroom c")
+  Long sumAllUnread();
 }
