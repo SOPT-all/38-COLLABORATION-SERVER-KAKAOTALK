@@ -18,3 +18,7 @@ spring:
         format_sql: false
     show-sql: false
     open-in-view: false
+
+# HTTPS 라우팅 처리
+server:
+  forward-headers-strategy: framework
