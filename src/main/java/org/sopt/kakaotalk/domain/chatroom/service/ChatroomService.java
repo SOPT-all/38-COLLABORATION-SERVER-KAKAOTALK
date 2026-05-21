@@ -12,6 +12,7 @@ import org.sopt.kakaotalk.domain.chatroom.entity.Chatroom;
 import org.sopt.kakaotalk.domain.chatroom.repository.ChatroomFolderRepository;
 import org.sopt.kakaotalk.domain.chatroom.repository.ChatroomRepository;
 import org.sopt.kakaotalk.domain.folder.entity.FolderName;
+import org.sopt.kakaotalk.global.code.GlobalErrorCode;
 import org.sopt.kakaotalk.global.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ChatroomService {
 
+  private static final String ALL = "ALL";
+  private static final String UNREAD = "UNREAD";
+
   private final ChatroomRepository chatroomRepository;
   private final ChatroomFolderRepository chatroomFolderRepository;
 
-  public ChatroomListResponse getAllChatrooms(FolderName folderName, boolean unreadOnly) {
-    List<Chatroom> chatrooms = findChatrooms(folderName, unreadOnly);
+  public ChatroomListResponse getAllChatrooms(String folderName) {
+    List<Chatroom> chatrooms = findChatrooms(folderName);
 
     if (chatrooms.isEmpty()) {
       return ChatroomListResponse.from(List.of());
@@ -61,16 +65,21 @@ public class ChatroomService {
     return ReadChatroomResponse.from(chatroom);
   }
 
-  private List<Chatroom> findChatrooms(FolderName folderName, boolean unreadOnly) {
-    if (folderName == null && !unreadOnly) {
+  private List<Chatroom> findChatrooms(String folderName) {
+    // 미지정 또는 ALL → 전체 조회
+    if (folderName == null || ALL.equals(folderName)) {
       return chatroomRepository.findAllOrderByLastMessageAtDesc();
     }
-    if (folderName != null && !unreadOnly) {
-      return chatroomRepository.findAllByFolderName(folderName);
-    }
-    if (folderName == null && unreadOnly) {
+    // UNREAD → 안 읽은 채팅방
+    if (UNREAD.equals(folderName)) {
       return chatroomRepository.findAllUnread();
     }
-    return chatroomRepository.findAllByFolderNameAndUnread(folderName);
+    // 나머지 → DB 폴더 필터 (잘못된 값은 IllegalArgumentException → 400 변환)
+    try {
+      FolderName folderNameEnum = FolderName.valueOf(folderName);
+      return chatroomRepository.findAllByFolderName(folderNameEnum);
+    } catch (IllegalArgumentException e) {
+      throw new BusinessException(GlobalErrorCode.INVALID_REQUEST);
+    }
   }
 }
